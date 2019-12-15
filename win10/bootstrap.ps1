@@ -15,6 +15,9 @@ function Setup-Choco {
 		echo "Chocolately not detected.  Installing..."
 		Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 	}
+
+	# make sure we have the gui installed on the system too
+	choco install chocolateygui -y
 }
 
 function Get-Choco-Version {
