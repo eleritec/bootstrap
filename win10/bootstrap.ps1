@@ -5,12 +5,13 @@
 function Setup-Basic-Tools {
 	choco install dos2unix -y
 	choco install 7zip -y
-	choco install procexp -y
+	choco install sysinternals -y
 	choco install notepadplusplus -y
 
 }
 function Setup-Dev-Tools {
 	choco install git -y
+	choco install p4v -y
 	choco install vscode -y
 
 	Setup-Java
@@ -25,8 +26,10 @@ function Install-Ubuntu-18 {
 	# download and install ubuntu 18.04 with Chocolatey
 	choco install wsl-ubuntu-1804 -y
 	
-	# TODO: find out if there's a way we can determine this programmatically
-	$ubuntu_path = "C:\ProgramData\chocolatey\lib\wsl-ubuntu-1804\tools\unzipped"
+	# Ubuntu was installed by choco, so we can find it installed under the 
+	# choco lib directory
+	$choco_path = Get-Choco-Path
+	$ubuntu_path = "$choco_path\lib\wsl-ubuntu-1804\tools\unzipped"
 	
 	# the choco package will install ubuntu with the root user.  we want to create
 	# and set the default user to match our current windows user
@@ -124,6 +127,13 @@ function Get-Choco-Version {
 		return $choco_version
 	}
 	return $null
+}
+
+function Get-Choco-Path {
+	# assumes choco is installed.  don't call this until we've installed chocolately
+	$choco_path = (get-command choco | Select-Object -ExpandProperty Definition)
+	$choco_path = $choco_path.split("\\") | Where-Object { $_ -ne "choco.exe" -And $_ -ne "bin" }
+	return $choco_path -join "\"
 }
 
 function Try-Command() {
