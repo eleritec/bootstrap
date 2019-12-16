@@ -7,7 +7,6 @@ function Setup-Basic-Tools {
 	choco install 7zip -y
 	choco install sysinternals -y
 	choco install notepadplusplus -y
-
 }
 function Setup-Dev-Tools {
 	choco install git -y
@@ -32,43 +31,39 @@ function Install-Ubuntu-18 {
 	$ubuntu_path = "$choco_path\lib\wsl-ubuntu-1804\tools\unzipped"
 	
 	# the choco package will install ubuntu with the root user.  we want to create
-	# and set the default user to match our current windows user
-	
-	# calling `wsl -d Ubuntu-18.04 adduser` chokes on --geocos for some reason, 
-	# so instead we'll dump the creation to a bash script that we can execute as root
-	$pw_params = $env:username + ':password'
-	echo "#!/bin/bash" > user_init.sh
-	echo "adduser --disabled-password --gecos '' $env:username" >> user_init.sh
-	echo "echo '$pw_params' | chpasswd" >> user_init.sh
-	$script_text = Get-Content user_init.sh
-	echo $script_text | out-file -encoding ASCII user_init.sh
-	dos2unix user_init.sh
-	wsl -d Ubuntu-18.04 chmod 744 ./user_init.sh
-	wsl -d Ubuntu-18.04 ./user_init.sh
-	rm user_init.sh
-	
-	# force them to change their password on next login
-	wsl -d Ubuntu-18.04 passwd --expire $env:username
-	
-	# add the user to expected groups
-    echo "Configuring groups for $env:username ..."
-	wsl -d Ubuntu-18.04 usermod -aG adm $env:username
-	wsl -d Ubuntu-18.04 usermod -aG dialout $env:username
-	wsl -d Ubuntu-18.04 usermod -aG cdrom $env:username
-	wsl -d Ubuntu-18.04 usermod -aG floppy $env:username
-	wsl -d Ubuntu-18.04 usermod -aG sudo $env:username
-	wsl -d Ubuntu-18.04 usermod -aG audio $env:username
-	wsl -d Ubuntu-18.04 usermod -aG dip $env:username
-	wsl -d Ubuntu-18.04 usermod -aG video $env:username
-	wsl -d Ubuntu-18.04 usermod -aG plugdev $env:username
-	wsl -d Ubuntu-18.04 usermod -aG lxd $env:username
-	wsl -d Ubuntu-18.04 usermod -aG netdev $env:username
-	
-	# make our user the default for ubuntu
-	if(-Not ($env:path -like '*wsl-ubuntu-1804*')) {
-		$env:path += ";$ubuntu_path"
-	}	
-	ubuntu1804 config --default-user $env:username
+	# and set the default user to match our current windows user.  first, check to
+	# see if they even exist
+	$user_check = wsl -d Ubuntu-18.04 -u root id -u $env:username 2>&1
+	if($user_check -like "*no such user") {
+		# calling `wsl -d Ubuntu-18.04 adduser` chokes on --geocos for some reason, 
+		# so instead we'll dump the creation to a bash script that we can execute as root
+		$pw_params = $env:username + ':password'
+		echo "#!/bin/bash" > user_init.sh
+		echo "adduser --disabled-password --gecos '' $env:username" >> user_init.sh
+		echo "echo '$pw_params' | chpasswd" >> user_init.sh
+		$script_text = Get-Content user_init.sh
+		echo $script_text | out-file -encoding ASCII user_init.sh
+		dos2unix user_init.sh
+		wsl -d Ubuntu-18.04 chmod 744 ./user_init.sh
+		wsl -d Ubuntu-18.04 ./user_init.sh
+		rm user_init.sh
+		
+		# force them to change their password on next login
+		wsl -d Ubuntu-18.04 passwd --expire $env:username
+		
+		# add the user to expected groups
+		echo "Configuring groups for $env:username ..."
+		$target_groups = @("adm", "dialout", "cdrom", "floppy", "sudo", "audio", "dip", "video", "plugdev", "lxd", "netdev")
+		foreach ($group in $target_groups) {
+			wsl -d Ubuntu-18.04 usermod -aG $group $env:username
+		}
+		
+		# make our user the default for ubuntu
+		if(-Not ($env:path -like '*wsl-ubuntu-1804*')) {
+			$env:path += ";$ubuntu_path"
+		}	
+		ubuntu1804 config --default-user $env:username
+	}
 	
 	# choco package installs under C:\ProgramData, which is restricted to admin.
 	# in order to run ubuntu without elevated privileges, we need to grant the
@@ -85,7 +80,10 @@ function Install-Ubuntu-18 {
     echo "Creating Ubuntu-18.04 Desktop shortcut..."
 	$launcher = "$ubuntu_path\ubuntu1804.exe"
 	$shortcut_file = [Environment]::GetFolderPath("Desktop") + "\Ubuntu-18_04.lnk"
-	Create-Shortcut $launcher $shortcut_file
+	if(-Not [System.IO.File]::Exists('C:\Users\eleri\bootstrap.ps1')) {
+		Create-Shortcut $launcher $shortcut_file
+	}
+		
 }
 
 function Setup-Java {
