@@ -134,8 +134,7 @@ function Get-Choco-Path {
 	return $choco_path -join "\"
 }
 
-function Try-Command() {
-	Param($command)
+function Try-Command($command) {
 	$old_preference = $ErrorActionPreference
 	$ErrorActionPreference = 'stop'
 	try {
