@@ -1,4 +1,6 @@
-
+# TODO: probably want to replace this with Boxstarter (https://boxstarter.org/)
+# Pre-requisite for installing WSL requires a system reboot, which Boxstarter is designed
+# to handle and plain-Chocolatey ("vanilla chocolatey"?) is going to make fairly messy.
 
 function Setup-Basic-Tools {
 	choco install dos2unix -y
@@ -151,7 +153,7 @@ function Create-Shortcut($source_exe, $dest_link) {
 function Prep-System {
 	# this will allow us to run PowerShell scripts
 	Set-ExecutionPolicy RemoteSigned -Scope LocalMachine
-	# this will require a restart
+	# this will require a restart.  look into Boxstarter for this.
 	Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
 }
 
